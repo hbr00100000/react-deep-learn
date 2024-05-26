@@ -107,6 +107,11 @@ const isInputPending =
 
 const continuousOptions = {includeContinuous: enableIsInputPendingContinuous};
 
+/**
+ * 将到期的延时任务放入即时队列
+ * @param {*} currentTime
+ * @returns
+ */
 function advanceTimers(currentTime) {
   // Check for tasks that are no longer delayed and add them to the queue.
   let timer = peek(timerQueue);
@@ -202,16 +207,19 @@ function workLoop(initialTime) {
   let currentTime = initialTime;
   advanceTimers(currentTime);
   currentTask = peek(taskQueue);
+  // 当前任务队列有任务
   while (
     currentTask !== null &&
     !(enableSchedulerDebugging && isSchedulerPaused)
   ) {
+    // 未到时间
     if (currentTask.expirationTime > currentTime && shouldYieldToHost()) {
       // This currentTask hasn't expired, and we've reached the deadline.
       break;
     }
     // $FlowFixMe[incompatible-use] found when upgrading Flow
     const callback = currentTask.callback;
+    // 到了时间
     if (typeof callback === 'function') {
       // $FlowFixMe[incompatible-use] found when upgrading Flow
       currentTask.callback = null;
